@@ -1,0 +1,95 @@
+BASE: ['']
+TOOLBOX_MODE: "train_and_test" # "train_and_test"  or "only_test"
+TRAIN:
+  BATCH_SIZE: 16
+  EPOCHS: 50   
+  LR: 1e-3
+  MODEL_FILE_NAME: UBFC_8-2_physnet
+  DATA:
+    FS: 30  #数据的采样频率
+    DATASET: UBFC
+    DO_PREPROCESS: True            # 首次运行时需要设为 True，预处理后可设为 False
+    DATA_FORMAT: NCDHW              #N: batch size, C: channels, D: depth/frames, H: height, W: width
+    DATA_PATH: "/ltb_work/rppg-Toolbox_MMPD/Datasets/UBFCData"
+    CACHED_PATH: "/ltb_work/rppg-Toolbox_MMPD/PreprocessedData"   #存放预处理文件
+    FILE_LIST_PATH: "/ltb_work/rppg-Toolbox_MMPD/DataFileLists"  #存放文件列表路径
+    EXP_DATA_NAME: ""
+    BEGIN: 0.0     #训练：验证=8：2
+    END: 0.8
+    PREPROCESS :
+      DATA_TYPE: ['DiffNormalized']       # 差分归一化，适用于 Physnet 模型。
+      LABEL_TYPE: DiffNormalized
+      DO_CHUNK: True                      # 将数据分块处理，便于处理长序列。
+      CHUNK_LENGTH: 128  #only support 512 的因数
+      DYNAMIC_DETECTION: False            # 不启用动态检测（动态变化检测）
+      DYNAMIC_DETECTION_FREQUENCY : 128
+      CROP_FACE: True                     # 进行人脸区域裁剪
+      LARGE_FACE_BOX: True
+      LARGE_BOX_COEF: 1.5
+      H: 72                               # 裁剪后图像的高度和宽度均设置为 72 像素。
+      W: 72
+VALID:
+  DATA:
+    FS: 30
+    DATASET: UBFC
+    DO_PREPROCESS: True                
+    DATA_FORMAT: NCDHW
+    DATA_PATH: "/ltb_work/rppg-Toolbox_MMPD/Datasets/UBFCData"
+    CACHED_PATH: "/ltb_work/rppg-Toolbox_MMPD/PreprocessedData"
+    FILE_LIST_PATH: "/ltb_work/rppg-Toolbox_MMPD/DataFileLists"
+    
+    EXP_DATA_NAME: ""
+    BEGIN: 0.8
+    END: 1.0
+    PREPROCESS :
+      DATA_TYPE: ['DiffNormalized'] 
+      LABEL_TYPE: DiffNormalized
+      DO_CHUNK: True
+      CHUNK_LENGTH: 128 
+      DYNAMIC_DETECTION: False
+      DYNAMIC_DETECTION_FREQUENCY : 128
+      CROP_FACE: True
+      LARGE_FACE_BOX: True
+      LARGE_BOX_COEF: 1.5
+      H: 72
+      W: 72
+TEST:
+  METRICS: ['MAE','RMSE','MAPE','Pearson']
+  USE_LAST_EPOCH: True                   # to use provided validation dataset to find the best epoch, should be false
+  DATA:
+    FS: 30
+    DATASET: UBFC
+    DO_PREPROCESS: True                  # if first time, should be true
+    DATA_FORMAT: NCDHW
+    DATA_PATH: "/ltb_work/rppg-Toolbox_MMPD/Datasets/UBFCData"
+    CACHED_PATH: "/ltb_work/rppg-Toolbox_MMPD/PreprocessedData"
+    FILE_LIST_PATH: "/ltb_work/rppg-Toolbox_MMPD/DataFileLists"
+
+    EXP_DATA_NAME: ""
+    BEGIN: 0.8
+    END: 1.0
+    PREPROCESS :
+      DATA_TYPE: ['DiffNormalized'] #if use physnet, should be DiffNormalized
+      LABEL_TYPE: DiffNormalized
+      DO_CHUNK: True
+      CHUNK_LENGTH: 128  #only support for factor of 512
+      DYNAMIC_DETECTION: False
+      DYNAMIC_DETECTION_FREQUENCY : 128
+      CROP_FACE: True
+      LARGE_FACE_BOX: True
+      LARGE_BOX_COEF: 1.5
+      H: 72
+      W: 72
+DEVICE: cuda:0
+NUM_OF_GPU_TRAIN: 1
+LOG:
+  PATH: runs/exp
+MODEL:
+  DROP_RATE: 0.2
+  NAME: Physnet
+  PHYSNET:
+    FRAME_NUM: 128
+INFERENCE:
+  BATCH_SIZE: 16
+  EVALUATION_METHOD: "FFT"        # "FFT" or "peak detection"
+  MODEL_PATH: ""
